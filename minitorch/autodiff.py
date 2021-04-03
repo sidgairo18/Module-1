@@ -96,7 +96,6 @@ class Context:
         assert self._saved_values is not None, "Did you forget to save values?"
         return unwrap_tuple(self._saved_values)
 
-
 class History:
     """
     `History` stores all of the `Function` operations that were used to
@@ -129,6 +128,7 @@ class VariableWithDeriv:
 
 
 class FunctionBase:
+
     """
     A function that can act on :class:`Variable` arguments to
     produce a :class:`Variable` output, while tracking the internal history.
@@ -179,8 +179,14 @@ class FunctionBase:
             (see `is_constant` to remove unneeded variables)
 
         """
-        # TODO: Implement for Task 1.3.
-        raise NotImplementedError('Need to implement for Task 1.3')
+
+        local_deris = cls.backward(ctx, d_output)
+        out_list = []
+        for v, der in zip(inputs, local_deris):
+            if isinstance(v, Variable) and not is_constant:
+                out_list.append(VariableWithDeriv(v, der))
+
+        return out_list
 
 
 def is_leaf(val):

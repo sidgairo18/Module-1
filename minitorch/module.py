@@ -22,21 +22,32 @@ class Module:
 
     def train(self):
         "Set the mode of this module and all descendent modules to `train`."
-        raise NotImplementedError('Need to include this file from past assignment.')
+        self.mode = "train"
+        for v in self.modules():
+            v.mode = "train"
 
     def eval(self):
         "Set the mode of this module and all descendent modules to `eval`."
-        raise NotImplementedError('Need to include this file from past assignment.')
+        self.mode = "eval"
+        for v in self.modules():
+            v.mode = "eval"
 
     def named_parameters(self):
         """
         Collect all the parameters of this module and its descendents.
-
-
         Returns:
             dict: Each name (key) and :class:`Parameter` (value) under this module.
         """
-        raise NotImplementedError('Need to include this file from past assignment.')
+        all_named_parameters = {}
+        for key, value in self.__dict__["_parameters"].items():
+            all_named_parameters[key] = value
+        
+        for name, v in self.__dict__["_modules"].items():
+            for key, value in v.named_parameters().items():
+                all_named_parameters[name+"."+key] = value
+
+        return all_named_parameters
+
 
     def parameters(self):
         return self.named_parameters().values()
