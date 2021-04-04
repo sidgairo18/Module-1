@@ -1,0 +1,1123 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.7.7, pytest-6.0.1, py-1.10.0, pluggy-0.13.1
+hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('/Users/sid/work/mini-torch-mle/workspace/Module-1/.hypothesis/examples')
+rootdir: /Users/sid/work/mini-torch-mle/workspace/Module-1, configfile: pytest.ini
+plugins: hypothesis-4.38.0
+collected 22 items / 10 deselected / 12 selected
+
+tests/test_autodiff.py F                                                 [  8%]
+tests/test_scalar.py FFFFFFFFFFF                                         [100%]
+
+=================================== FAILURES ===================================
+________________________________ test_backprop _________________________________
+
+    @pytest.mark.task1_4
+    def test_backprop():
+        var = Variable(History())
+        var2 = Variable(History(Temp, None, [0, var]))
+        var2.backward(5)
+>       assert var.derivative == 5
+E       assert None == 5
+E        +  where None = <minitorch.autodiff.Variable object at 0x7f9210dca3d0>.derivative
+
+tests/test_autodiff.py:61: AssertionError
+___________________________ test_one_derivative[fn0] ___________________________
+
+fn = ('neg', <function <lambda> at 0x7f9210d8f0e0>)
+
+    @given(scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", one_arg)
+    def test_one_derivative(fn, t1):
+
+tests/test_scalar.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:50: in test_one_derivative
+    minitorch.derivative_check(fn[1], t1)
+minitorch/scalar.py:262: in derivative_check
+    out.backward()
+minitorch/autodiff.py:46: in backward
+    backpropagate(VariableWithDeriv(self, d_output))
+minitorch/autodiff.py:226: in backpropagate
+    for vwd in v.history.backprop_step(deriv):
+minitorch/autodiff.py:120: in backprop_step
+    return self.last_fn.chain_rule(self.ctx, self.inputs, d_output)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'minitorch.scalar.Neg'>
+ctx = <minitorch.autodiff.Context object at 0x7f92103f4f10>
+inputs = (Scalar(0.000000),), d_output = 1.0
+
+    @classmethod
+    def chain_rule(cls, ctx, inputs, d_output):
+        """
+        Implement the derivative chain-rule.
+    
+        Args:
+            cls (:class:`FunctionBase`): The Function
+            ctx (:class:`Context`) : The context from running forward
+            inputs (list of args) : The args that were passed to :func:`FunctionBase.apply` (e.g. :math:`x, y`)
+            d_output (number) : The `d_output` value in the chain rule.
+    
+        Returns:
+            list of :class:`VariableWithDeriv`: A list of non-constant variables with their derivatives
+            (see `is_constant` to remove unneeded variables)
+    
+        """
+    
+        local_deris = cls.backward(ctx, d_output)
+        out_list = []
+>       for v, der in zip(inputs, local_deris):
+E       TypeError: zip argument #2 must support iteration
+
+minitorch/autodiff.py:186: TypeError
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_one_derivative(fn=('neg', <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000))
+___________________________ test_one_derivative[fn1] ___________________________
+
+fn = ('addconstant', <function <lambda> at 0x7f9210da3290>)
+
+    @given(scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", one_arg)
+    def test_one_derivative(fn, t1):
+
+tests/test_scalar.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:50: in test_one_derivative
+    minitorch.derivative_check(fn[1], t1)
+minitorch/scalar.py:269: in derivative_check
+    np.testing.assert_allclose(x.derivative, check.data, 1e-2, 1e-2)
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/testing/_private/utils.py:1523: in compare
+    equal_nan=equal_nan)
+<__array_function__ internals>:6: in isclose
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = array(None, dtype=object), b = array(1.), rtol = 0.01, atol = 0.01
+equal_nan = True
+
+    @array_function_dispatch(_isclose_dispatcher)
+    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+        """
+        Returns a boolean array where two arrays are element-wise equal within a
+        tolerance.
+    
+        The tolerance values are positive, typically very small numbers.  The
+        relative difference (`rtol` * abs(`b`)) and the absolute difference
+        `atol` are added together to compare against the absolute difference
+        between `a` and `b`.
+    
+        .. warning:: The default `atol` is not appropriate for comparing numbers
+                     that are much smaller than one (see Notes).
+    
+        Parameters
+        ----------
+        a, b : array_like
+            Input arrays to compare.
+        rtol : float
+            The relative tolerance parameter (see Notes).
+        atol : float
+            The absolute tolerance parameter (see Notes).
+        equal_nan : bool
+            Whether to compare NaN's as equal.  If True, NaN's in `a` will be
+            considered equal to NaN's in `b` in the output array.
+    
+        Returns
+        -------
+        y : array_like
+            Returns a boolean array of where `a` and `b` are equal within the
+            given tolerance. If both `a` and `b` are scalars, returns a single
+            boolean value.
+    
+        See Also
+        --------
+        allclose
+    
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+    
+        For finite values, isclose uses the following equation to test whether
+        two floating point values are equivalent.
+    
+         absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+    
+        Unlike the built-in `math.isclose`, the above equation is not symmetric
+        in `a` and `b` -- it assumes `b` is the reference value -- so that
+        `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
+        the default value of atol is not zero, and is used to determine what
+        small values should be considered close to zero. The default value is
+        appropriate for expected values of order unity: if the expected values
+        are significantly smaller than one, it can result in false positives.
+        `atol` should be carefully selected for the use case at hand. A zero value
+        for `atol` will result in `False` if either `a` or `b` is zero.
+    
+        Examples
+        --------
+        >>> np.isclose([1e10,1e-7], [1.00001e10,1e-8])
+        array([ True, False])
+        >>> np.isclose([1e10,1e-8], [1.00001e10,1e-9])
+        array([ True, True])
+        >>> np.isclose([1e10,1e-8], [1.0001e10,1e-9])
+        array([False,  True])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan])
+        array([ True, False])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
+        array([ True, True])
+        >>> np.isclose([1e-8, 1e-7], [0.0, 0.0])
+        array([ True, False])
+        >>> np.isclose([1e-100, 1e-7], [0.0, 0.0], atol=0.0)
+        array([False, False])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.0])
+        array([ True,  True])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
+        array([False,  True])
+        """
+        def within_tol(x, y, atol, rtol):
+            with errstate(invalid='ignore'):
+                return less_equal(abs(x-y), atol + rtol * abs(y))
+    
+        x = asanyarray(a)
+        y = asanyarray(b)
+    
+        # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+        # This will cause casting of x later. Also, make sure to allow subclasses
+        # (e.g., for numpy.ma).
+        dt = multiarray.result_type(y, 1.)
+        y = array(y, dtype=dt, copy=False, subok=True)
+    
+>       xfin = isfinite(x)
+E       TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''
+
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/core/numeric.py:2287: TypeError
+----------------------------- Captured stdout call -----------------------------
+None Scalar(1.000000)
+None Scalar(1.000000)
+None Scalar(1.000000)
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_one_derivative(fn=('addconstant', <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000))
+___________________________ test_one_derivative[fn2] ___________________________
+
+fn = ('subconstant', <function <lambda> at 0x7f9210da3440>)
+
+    @given(scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", one_arg)
+    def test_one_derivative(fn, t1):
+
+tests/test_scalar.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:50: in test_one_derivative
+    minitorch.derivative_check(fn[1], t1)
+minitorch/scalar.py:269: in derivative_check
+    np.testing.assert_allclose(x.derivative, check.data, 1e-2, 1e-2)
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/testing/_private/utils.py:1523: in compare
+    equal_nan=equal_nan)
+<__array_function__ internals>:6: in isclose
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = array(None, dtype=object), b = array(1.), rtol = 0.01, atol = 0.01
+equal_nan = True
+
+    @array_function_dispatch(_isclose_dispatcher)
+    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+        """
+        Returns a boolean array where two arrays are element-wise equal within a
+        tolerance.
+    
+        The tolerance values are positive, typically very small numbers.  The
+        relative difference (`rtol` * abs(`b`)) and the absolute difference
+        `atol` are added together to compare against the absolute difference
+        between `a` and `b`.
+    
+        .. warning:: The default `atol` is not appropriate for comparing numbers
+                     that are much smaller than one (see Notes).
+    
+        Parameters
+        ----------
+        a, b : array_like
+            Input arrays to compare.
+        rtol : float
+            The relative tolerance parameter (see Notes).
+        atol : float
+            The absolute tolerance parameter (see Notes).
+        equal_nan : bool
+            Whether to compare NaN's as equal.  If True, NaN's in `a` will be
+            considered equal to NaN's in `b` in the output array.
+    
+        Returns
+        -------
+        y : array_like
+            Returns a boolean array of where `a` and `b` are equal within the
+            given tolerance. If both `a` and `b` are scalars, returns a single
+            boolean value.
+    
+        See Also
+        --------
+        allclose
+    
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+    
+        For finite values, isclose uses the following equation to test whether
+        two floating point values are equivalent.
+    
+         absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+    
+        Unlike the built-in `math.isclose`, the above equation is not symmetric
+        in `a` and `b` -- it assumes `b` is the reference value -- so that
+        `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
+        the default value of atol is not zero, and is used to determine what
+        small values should be considered close to zero. The default value is
+        appropriate for expected values of order unity: if the expected values
+        are significantly smaller than one, it can result in false positives.
+        `atol` should be carefully selected for the use case at hand. A zero value
+        for `atol` will result in `False` if either `a` or `b` is zero.
+    
+        Examples
+        --------
+        >>> np.isclose([1e10,1e-7], [1.00001e10,1e-8])
+        array([ True, False])
+        >>> np.isclose([1e10,1e-8], [1.00001e10,1e-9])
+        array([ True, True])
+        >>> np.isclose([1e10,1e-8], [1.0001e10,1e-9])
+        array([False,  True])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan])
+        array([ True, False])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
+        array([ True, True])
+        >>> np.isclose([1e-8, 1e-7], [0.0, 0.0])
+        array([ True, False])
+        >>> np.isclose([1e-100, 1e-7], [0.0, 0.0], atol=0.0)
+        array([False, False])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.0])
+        array([ True,  True])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
+        array([False,  True])
+        """
+        def within_tol(x, y, atol, rtol):
+            with errstate(invalid='ignore'):
+                return less_equal(abs(x-y), atol + rtol * abs(y))
+    
+        x = asanyarray(a)
+        y = asanyarray(b)
+    
+        # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+        # This will cause casting of x later. Also, make sure to allow subclasses
+        # (e.g., for numpy.ma).
+        dt = multiarray.result_type(y, 1.)
+        y = array(y, dtype=dt, copy=False, subok=True)
+    
+>       xfin = isfinite(x)
+E       TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''
+
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/core/numeric.py:2287: TypeError
+----------------------------- Captured stdout call -----------------------------
+None Scalar(1.000000)
+None Scalar(1.000000)
+None Scalar(1.000000)
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_one_derivative(fn=('subconstant', <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000))
+___________________________ test_one_derivative[fn3] ___________________________
+
+fn = ('mult', <function <lambda> at 0x7f9210da34d0>)
+
+    @given(scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", one_arg)
+    def test_one_derivative(fn, t1):
+
+tests/test_scalar.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:50: in test_one_derivative
+    minitorch.derivative_check(fn[1], t1)
+minitorch/scalar.py:269: in derivative_check
+    np.testing.assert_allclose(x.derivative, check.data, 1e-2, 1e-2)
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/testing/_private/utils.py:1523: in compare
+    equal_nan=equal_nan)
+<__array_function__ internals>:6: in isclose
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = array(None, dtype=object), b = array(5.), rtol = 0.01, atol = 0.01
+equal_nan = True
+
+    @array_function_dispatch(_isclose_dispatcher)
+    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+        """
+        Returns a boolean array where two arrays are element-wise equal within a
+        tolerance.
+    
+        The tolerance values are positive, typically very small numbers.  The
+        relative difference (`rtol` * abs(`b`)) and the absolute difference
+        `atol` are added together to compare against the absolute difference
+        between `a` and `b`.
+    
+        .. warning:: The default `atol` is not appropriate for comparing numbers
+                     that are much smaller than one (see Notes).
+    
+        Parameters
+        ----------
+        a, b : array_like
+            Input arrays to compare.
+        rtol : float
+            The relative tolerance parameter (see Notes).
+        atol : float
+            The absolute tolerance parameter (see Notes).
+        equal_nan : bool
+            Whether to compare NaN's as equal.  If True, NaN's in `a` will be
+            considered equal to NaN's in `b` in the output array.
+    
+        Returns
+        -------
+        y : array_like
+            Returns a boolean array of where `a` and `b` are equal within the
+            given tolerance. If both `a` and `b` are scalars, returns a single
+            boolean value.
+    
+        See Also
+        --------
+        allclose
+    
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+    
+        For finite values, isclose uses the following equation to test whether
+        two floating point values are equivalent.
+    
+         absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+    
+        Unlike the built-in `math.isclose`, the above equation is not symmetric
+        in `a` and `b` -- it assumes `b` is the reference value -- so that
+        `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
+        the default value of atol is not zero, and is used to determine what
+        small values should be considered close to zero. The default value is
+        appropriate for expected values of order unity: if the expected values
+        are significantly smaller than one, it can result in false positives.
+        `atol` should be carefully selected for the use case at hand. A zero value
+        for `atol` will result in `False` if either `a` or `b` is zero.
+    
+        Examples
+        --------
+        >>> np.isclose([1e10,1e-7], [1.00001e10,1e-8])
+        array([ True, False])
+        >>> np.isclose([1e10,1e-8], [1.00001e10,1e-9])
+        array([ True, True])
+        >>> np.isclose([1e10,1e-8], [1.0001e10,1e-9])
+        array([False,  True])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan])
+        array([ True, False])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
+        array([ True, True])
+        >>> np.isclose([1e-8, 1e-7], [0.0, 0.0])
+        array([ True, False])
+        >>> np.isclose([1e-100, 1e-7], [0.0, 0.0], atol=0.0)
+        array([False, False])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.0])
+        array([ True,  True])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
+        array([False,  True])
+        """
+        def within_tol(x, y, atol, rtol):
+            with errstate(invalid='ignore'):
+                return less_equal(abs(x-y), atol + rtol * abs(y))
+    
+        x = asanyarray(a)
+        y = asanyarray(b)
+    
+        # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+        # This will cause casting of x later. Also, make sure to allow subclasses
+        # (e.g., for numpy.ma).
+        dt = multiarray.result_type(y, 1.)
+        y = array(y, dtype=dt, copy=False, subok=True)
+    
+>       xfin = isfinite(x)
+E       TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''
+
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/core/numeric.py:2287: TypeError
+----------------------------- Captured stdout call -----------------------------
+None Scalar(5.000000)
+None Scalar(5.000000)
+None Scalar(5.000000)
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_one_derivative(fn=('mult', <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000))
+___________________________ test_one_derivative[fn4] ___________________________
+
+fn = ('div', <function <lambda> at 0x7f9210da3560>)
+
+    @given(scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", one_arg)
+    def test_one_derivative(fn, t1):
+
+tests/test_scalar.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:50: in test_one_derivative
+    minitorch.derivative_check(fn[1], t1)
+minitorch/scalar.py:269: in derivative_check
+    np.testing.assert_allclose(x.derivative, check.data, 1e-2, 1e-2)
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/testing/_private/utils.py:1523: in compare
+    equal_nan=equal_nan)
+<__array_function__ internals>:6: in isclose
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = array(None, dtype=object), b = array(0.2), rtol = 0.01, atol = 0.01
+equal_nan = True
+
+    @array_function_dispatch(_isclose_dispatcher)
+    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+        """
+        Returns a boolean array where two arrays are element-wise equal within a
+        tolerance.
+    
+        The tolerance values are positive, typically very small numbers.  The
+        relative difference (`rtol` * abs(`b`)) and the absolute difference
+        `atol` are added together to compare against the absolute difference
+        between `a` and `b`.
+    
+        .. warning:: The default `atol` is not appropriate for comparing numbers
+                     that are much smaller than one (see Notes).
+    
+        Parameters
+        ----------
+        a, b : array_like
+            Input arrays to compare.
+        rtol : float
+            The relative tolerance parameter (see Notes).
+        atol : float
+            The absolute tolerance parameter (see Notes).
+        equal_nan : bool
+            Whether to compare NaN's as equal.  If True, NaN's in `a` will be
+            considered equal to NaN's in `b` in the output array.
+    
+        Returns
+        -------
+        y : array_like
+            Returns a boolean array of where `a` and `b` are equal within the
+            given tolerance. If both `a` and `b` are scalars, returns a single
+            boolean value.
+    
+        See Also
+        --------
+        allclose
+    
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+    
+        For finite values, isclose uses the following equation to test whether
+        two floating point values are equivalent.
+    
+         absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+    
+        Unlike the built-in `math.isclose`, the above equation is not symmetric
+        in `a` and `b` -- it assumes `b` is the reference value -- so that
+        `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
+        the default value of atol is not zero, and is used to determine what
+        small values should be considered close to zero. The default value is
+        appropriate for expected values of order unity: if the expected values
+        are significantly smaller than one, it can result in false positives.
+        `atol` should be carefully selected for the use case at hand. A zero value
+        for `atol` will result in `False` if either `a` or `b` is zero.
+    
+        Examples
+        --------
+        >>> np.isclose([1e10,1e-7], [1.00001e10,1e-8])
+        array([ True, False])
+        >>> np.isclose([1e10,1e-8], [1.00001e10,1e-9])
+        array([ True, True])
+        >>> np.isclose([1e10,1e-8], [1.0001e10,1e-9])
+        array([False,  True])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan])
+        array([ True, False])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
+        array([ True, True])
+        >>> np.isclose([1e-8, 1e-7], [0.0, 0.0])
+        array([ True, False])
+        >>> np.isclose([1e-100, 1e-7], [0.0, 0.0], atol=0.0)
+        array([False, False])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.0])
+        array([ True,  True])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
+        array([False,  True])
+        """
+        def within_tol(x, y, atol, rtol):
+            with errstate(invalid='ignore'):
+                return less_equal(abs(x-y), atol + rtol * abs(y))
+    
+        x = asanyarray(a)
+        y = asanyarray(b)
+    
+        # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+        # This will cause casting of x later. Also, make sure to allow subclasses
+        # (e.g., for numpy.ma).
+        dt = multiarray.result_type(y, 1.)
+        y = array(y, dtype=dt, copy=False, subok=True)
+    
+>       xfin = isfinite(x)
+E       TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''
+
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/core/numeric.py:2287: TypeError
+----------------------------- Captured stdout call -----------------------------
+None Scalar(0.200000)
+None Scalar(0.200000)
+None Scalar(0.200000)
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_one_derivative(fn=('div', <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000))
+___________________________ test_one_derivative[fn5] ___________________________
+
+fn = ('sig', <function <lambda> at 0x7f9210da35f0>, <function <lambda> at 0x7f9210da3680>)
+
+    @given(scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", one_arg)
+    def test_one_derivative(fn, t1):
+
+tests/test_scalar.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:50: in test_one_derivative
+    minitorch.derivative_check(fn[1], t1)
+minitorch/scalar.py:262: in derivative_check
+    out.backward()
+minitorch/autodiff.py:46: in backward
+    backpropagate(VariableWithDeriv(self, d_output))
+minitorch/autodiff.py:226: in backpropagate
+    for vwd in v.history.backprop_step(deriv):
+minitorch/autodiff.py:120: in backprop_step
+    return self.last_fn.chain_rule(self.ctx, self.inputs, d_output)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'minitorch.scalar.Sigmoid'>
+ctx = <minitorch.autodiff.Context object at 0x7f9210ff0e10>
+inputs = (Scalar(0.000000),), d_output = 1.0
+
+    @classmethod
+    def chain_rule(cls, ctx, inputs, d_output):
+        """
+        Implement the derivative chain-rule.
+    
+        Args:
+            cls (:class:`FunctionBase`): The Function
+            ctx (:class:`Context`) : The context from running forward
+            inputs (list of args) : The args that were passed to :func:`FunctionBase.apply` (e.g. :math:`x, y`)
+            d_output (number) : The `d_output` value in the chain rule.
+    
+        Returns:
+            list of :class:`VariableWithDeriv`: A list of non-constant variables with their derivatives
+            (see `is_constant` to remove unneeded variables)
+    
+        """
+    
+        local_deris = cls.backward(ctx, d_output)
+        out_list = []
+>       for v, der in zip(inputs, local_deris):
+E       TypeError: zip argument #2 must support iteration
+
+minitorch/autodiff.py:186: TypeError
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_one_derivative(fn=('sig',
+ <function tests.test_scalar.<lambda>>,
+ <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000))
+___________________________ test_one_derivative[fn6] ___________________________
+
+fn = ('log', <function <lambda> at 0x7f9210da3710>, <function <lambda> at 0x7f9210da37a0>)
+
+    @given(scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", one_arg)
+    def test_one_derivative(fn, t1):
+
+tests/test_scalar.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:50: in test_one_derivative
+    minitorch.derivative_check(fn[1], t1)
+minitorch/scalar.py:262: in derivative_check
+    out.backward()
+minitorch/autodiff.py:46: in backward
+    backpropagate(VariableWithDeriv(self, d_output))
+minitorch/autodiff.py:226: in backpropagate
+    for vwd in v.history.backprop_step(deriv):
+minitorch/autodiff.py:120: in backprop_step
+    return self.last_fn.chain_rule(self.ctx, self.inputs, d_output)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'minitorch.scalar.Log'>
+ctx = <minitorch.autodiff.Context object at 0x7f92119e8850>
+inputs = (Scalar(100000.000000),), d_output = 1.0
+
+    @classmethod
+    def chain_rule(cls, ctx, inputs, d_output):
+        """
+        Implement the derivative chain-rule.
+    
+        Args:
+            cls (:class:`FunctionBase`): The Function
+            ctx (:class:`Context`) : The context from running forward
+            inputs (list of args) : The args that were passed to :func:`FunctionBase.apply` (e.g. :math:`x, y`)
+            d_output (number) : The `d_output` value in the chain rule.
+    
+        Returns:
+            list of :class:`VariableWithDeriv`: A list of non-constant variables with their derivatives
+            (see `is_constant` to remove unneeded variables)
+    
+        """
+    
+        local_deris = cls.backward(ctx, d_output)
+        out_list = []
+>       for v, der in zip(inputs, local_deris):
+E       TypeError: zip argument #2 must support iteration
+
+minitorch/autodiff.py:186: TypeError
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_one_derivative(fn=('log',
+ <function tests.test_scalar.<lambda>>,
+ <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000))
+___________________________ test_one_derivative[fn7] ___________________________
+
+fn = ('relu', <function <lambda> at 0x7f9210da3830>, <function <lambda> at 0x7f9210da38c0>)
+
+    @given(scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", one_arg)
+    def test_one_derivative(fn, t1):
+
+tests/test_scalar.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:50: in test_one_derivative
+    minitorch.derivative_check(fn[1], t1)
+minitorch/scalar.py:262: in derivative_check
+    out.backward()
+minitorch/autodiff.py:46: in backward
+    backpropagate(VariableWithDeriv(self, d_output))
+minitorch/autodiff.py:226: in backpropagate
+    for vwd in v.history.backprop_step(deriv):
+minitorch/autodiff.py:120: in backprop_step
+    return self.last_fn.chain_rule(self.ctx, self.inputs, d_output)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'minitorch.scalar.ReLU'>
+ctx = <minitorch.autodiff.Context object at 0x7f9211971a10>
+inputs = (Scalar(5.500000),), d_output = 1.0
+
+    @classmethod
+    def chain_rule(cls, ctx, inputs, d_output):
+        """
+        Implement the derivative chain-rule.
+    
+        Args:
+            cls (:class:`FunctionBase`): The Function
+            ctx (:class:`Context`) : The context from running forward
+            inputs (list of args) : The args that were passed to :func:`FunctionBase.apply` (e.g. :math:`x, y`)
+            d_output (number) : The `d_output` value in the chain rule.
+    
+        Returns:
+            list of :class:`VariableWithDeriv`: A list of non-constant variables with their derivatives
+            (see `is_constant` to remove unneeded variables)
+    
+        """
+    
+        local_deris = cls.backward(ctx, d_output)
+        out_list = []
+>       for v, der in zip(inputs, local_deris):
+E       TypeError: zip argument #2 must support iteration
+
+minitorch/autodiff.py:186: TypeError
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_one_derivative(fn=('relu',
+ <function tests.test_scalar.<lambda>>,
+ <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000))
+___________________________ test_two_derivative[fn0] ___________________________
+
+fn = ('add', <function <lambda> at 0x7f9210da3950>)
+
+    @given(scalars(min_value=-100, max_value=100), scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", two_arg)
+    def test_two_derivative(fn, t1, t2):
+
+tests/test_scalar.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:64: in test_two_derivative
+    minitorch.derivative_check(fn[1], t1, t2)
+minitorch/scalar.py:269: in derivative_check
+    np.testing.assert_allclose(x.derivative, check.data, 1e-2, 1e-2)
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/testing/_private/utils.py:1523: in compare
+    equal_nan=equal_nan)
+<__array_function__ internals>:6: in isclose
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = array(None, dtype=object), b = array(1.), rtol = 0.01, atol = 0.01
+equal_nan = True
+
+    @array_function_dispatch(_isclose_dispatcher)
+    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+        """
+        Returns a boolean array where two arrays are element-wise equal within a
+        tolerance.
+    
+        The tolerance values are positive, typically very small numbers.  The
+        relative difference (`rtol` * abs(`b`)) and the absolute difference
+        `atol` are added together to compare against the absolute difference
+        between `a` and `b`.
+    
+        .. warning:: The default `atol` is not appropriate for comparing numbers
+                     that are much smaller than one (see Notes).
+    
+        Parameters
+        ----------
+        a, b : array_like
+            Input arrays to compare.
+        rtol : float
+            The relative tolerance parameter (see Notes).
+        atol : float
+            The absolute tolerance parameter (see Notes).
+        equal_nan : bool
+            Whether to compare NaN's as equal.  If True, NaN's in `a` will be
+            considered equal to NaN's in `b` in the output array.
+    
+        Returns
+        -------
+        y : array_like
+            Returns a boolean array of where `a` and `b` are equal within the
+            given tolerance. If both `a` and `b` are scalars, returns a single
+            boolean value.
+    
+        See Also
+        --------
+        allclose
+    
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+    
+        For finite values, isclose uses the following equation to test whether
+        two floating point values are equivalent.
+    
+         absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+    
+        Unlike the built-in `math.isclose`, the above equation is not symmetric
+        in `a` and `b` -- it assumes `b` is the reference value -- so that
+        `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
+        the default value of atol is not zero, and is used to determine what
+        small values should be considered close to zero. The default value is
+        appropriate for expected values of order unity: if the expected values
+        are significantly smaller than one, it can result in false positives.
+        `atol` should be carefully selected for the use case at hand. A zero value
+        for `atol` will result in `False` if either `a` or `b` is zero.
+    
+        Examples
+        --------
+        >>> np.isclose([1e10,1e-7], [1.00001e10,1e-8])
+        array([ True, False])
+        >>> np.isclose([1e10,1e-8], [1.00001e10,1e-9])
+        array([ True, True])
+        >>> np.isclose([1e10,1e-8], [1.0001e10,1e-9])
+        array([False,  True])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan])
+        array([ True, False])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
+        array([ True, True])
+        >>> np.isclose([1e-8, 1e-7], [0.0, 0.0])
+        array([ True, False])
+        >>> np.isclose([1e-100, 1e-7], [0.0, 0.0], atol=0.0)
+        array([False, False])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.0])
+        array([ True,  True])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
+        array([False,  True])
+        """
+        def within_tol(x, y, atol, rtol):
+            with errstate(invalid='ignore'):
+                return less_equal(abs(x-y), atol + rtol * abs(y))
+    
+        x = asanyarray(a)
+        y = asanyarray(b)
+    
+        # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+        # This will cause casting of x later. Also, make sure to allow subclasses
+        # (e.g., for numpy.ma).
+        dt = multiarray.result_type(y, 1.)
+        y = array(y, dtype=dt, copy=False, subok=True)
+    
+>       xfin = isfinite(x)
+E       TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''
+
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/core/numeric.py:2287: TypeError
+----------------------------- Captured stdout call -----------------------------
+None Scalar(1.000000)
+None Scalar(1.000000)
+None Scalar(1.000000)
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_two_derivative(fn=('add', <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000), t2=Scalar(0.000000))
+___________________________ test_two_derivative[fn1] ___________________________
+
+fn = ('mul', <function <lambda> at 0x7f9210da3f80>)
+
+    @given(scalars(min_value=-100, max_value=100), scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", two_arg)
+    def test_two_derivative(fn, t1, t2):
+
+tests/test_scalar.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:64: in test_two_derivative
+    minitorch.derivative_check(fn[1], t1, t2)
+minitorch/scalar.py:269: in derivative_check
+    np.testing.assert_allclose(x.derivative, check.data, 1e-2, 1e-2)
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/testing/_private/utils.py:1523: in compare
+    equal_nan=equal_nan)
+<__array_function__ internals>:6: in isclose
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = array(None, dtype=object), b = array(0.), rtol = 0.01, atol = 0.01
+equal_nan = True
+
+    @array_function_dispatch(_isclose_dispatcher)
+    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+        """
+        Returns a boolean array where two arrays are element-wise equal within a
+        tolerance.
+    
+        The tolerance values are positive, typically very small numbers.  The
+        relative difference (`rtol` * abs(`b`)) and the absolute difference
+        `atol` are added together to compare against the absolute difference
+        between `a` and `b`.
+    
+        .. warning:: The default `atol` is not appropriate for comparing numbers
+                     that are much smaller than one (see Notes).
+    
+        Parameters
+        ----------
+        a, b : array_like
+            Input arrays to compare.
+        rtol : float
+            The relative tolerance parameter (see Notes).
+        atol : float
+            The absolute tolerance parameter (see Notes).
+        equal_nan : bool
+            Whether to compare NaN's as equal.  If True, NaN's in `a` will be
+            considered equal to NaN's in `b` in the output array.
+    
+        Returns
+        -------
+        y : array_like
+            Returns a boolean array of where `a` and `b` are equal within the
+            given tolerance. If both `a` and `b` are scalars, returns a single
+            boolean value.
+    
+        See Also
+        --------
+        allclose
+    
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+    
+        For finite values, isclose uses the following equation to test whether
+        two floating point values are equivalent.
+    
+         absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+    
+        Unlike the built-in `math.isclose`, the above equation is not symmetric
+        in `a` and `b` -- it assumes `b` is the reference value -- so that
+        `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
+        the default value of atol is not zero, and is used to determine what
+        small values should be considered close to zero. The default value is
+        appropriate for expected values of order unity: if the expected values
+        are significantly smaller than one, it can result in false positives.
+        `atol` should be carefully selected for the use case at hand. A zero value
+        for `atol` will result in `False` if either `a` or `b` is zero.
+    
+        Examples
+        --------
+        >>> np.isclose([1e10,1e-7], [1.00001e10,1e-8])
+        array([ True, False])
+        >>> np.isclose([1e10,1e-8], [1.00001e10,1e-9])
+        array([ True, True])
+        >>> np.isclose([1e10,1e-8], [1.0001e10,1e-9])
+        array([False,  True])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan])
+        array([ True, False])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
+        array([ True, True])
+        >>> np.isclose([1e-8, 1e-7], [0.0, 0.0])
+        array([ True, False])
+        >>> np.isclose([1e-100, 1e-7], [0.0, 0.0], atol=0.0)
+        array([False, False])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.0])
+        array([ True,  True])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
+        array([False,  True])
+        """
+        def within_tol(x, y, atol, rtol):
+            with errstate(invalid='ignore'):
+                return less_equal(abs(x-y), atol + rtol * abs(y))
+    
+        x = asanyarray(a)
+        y = asanyarray(b)
+    
+        # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+        # This will cause casting of x later. Also, make sure to allow subclasses
+        # (e.g., for numpy.ma).
+        dt = multiarray.result_type(y, 1.)
+        y = array(y, dtype=dt, copy=False, subok=True)
+    
+>       xfin = isfinite(x)
+E       TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''
+
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/core/numeric.py:2287: TypeError
+----------------------------- Captured stdout call -----------------------------
+None Scalar(0.000000)
+None Scalar(0.000000)
+None Scalar(0.000000)
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_two_derivative(fn=('mul', <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000), t2=Scalar(0.000000))
+___________________________ test_two_derivative[fn2] ___________________________
+
+fn = ('div', <function <lambda> at 0x7f9210da5170>)
+
+    @given(scalars(min_value=-100, max_value=100), scalars(min_value=-100, max_value=100))
+>   @pytest.mark.task1_4
+    @pytest.mark.parametrize("fn", two_arg)
+    def test_two_derivative(fn, t1, t2):
+
+tests/test_scalar.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_scalar.py:64: in test_two_derivative
+    minitorch.derivative_check(fn[1], t1, t2)
+minitorch/scalar.py:269: in derivative_check
+    np.testing.assert_allclose(x.derivative, check.data, 1e-2, 1e-2)
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/testing/_private/utils.py:1523: in compare
+    equal_nan=equal_nan)
+<__array_function__ internals>:6: in isclose
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = array(None, dtype=object), b = array(0.18181818), rtol = 0.01, atol = 0.01
+equal_nan = True
+
+    @array_function_dispatch(_isclose_dispatcher)
+    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+        """
+        Returns a boolean array where two arrays are element-wise equal within a
+        tolerance.
+    
+        The tolerance values are positive, typically very small numbers.  The
+        relative difference (`rtol` * abs(`b`)) and the absolute difference
+        `atol` are added together to compare against the absolute difference
+        between `a` and `b`.
+    
+        .. warning:: The default `atol` is not appropriate for comparing numbers
+                     that are much smaller than one (see Notes).
+    
+        Parameters
+        ----------
+        a, b : array_like
+            Input arrays to compare.
+        rtol : float
+            The relative tolerance parameter (see Notes).
+        atol : float
+            The absolute tolerance parameter (see Notes).
+        equal_nan : bool
+            Whether to compare NaN's as equal.  If True, NaN's in `a` will be
+            considered equal to NaN's in `b` in the output array.
+    
+        Returns
+        -------
+        y : array_like
+            Returns a boolean array of where `a` and `b` are equal within the
+            given tolerance. If both `a` and `b` are scalars, returns a single
+            boolean value.
+    
+        See Also
+        --------
+        allclose
+    
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+    
+        For finite values, isclose uses the following equation to test whether
+        two floating point values are equivalent.
+    
+         absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+    
+        Unlike the built-in `math.isclose`, the above equation is not symmetric
+        in `a` and `b` -- it assumes `b` is the reference value -- so that
+        `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
+        the default value of atol is not zero, and is used to determine what
+        small values should be considered close to zero. The default value is
+        appropriate for expected values of order unity: if the expected values
+        are significantly smaller than one, it can result in false positives.
+        `atol` should be carefully selected for the use case at hand. A zero value
+        for `atol` will result in `False` if either `a` or `b` is zero.
+    
+        Examples
+        --------
+        >>> np.isclose([1e10,1e-7], [1.00001e10,1e-8])
+        array([ True, False])
+        >>> np.isclose([1e10,1e-8], [1.00001e10,1e-9])
+        array([ True, True])
+        >>> np.isclose([1e10,1e-8], [1.0001e10,1e-9])
+        array([False,  True])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan])
+        array([ True, False])
+        >>> np.isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
+        array([ True, True])
+        >>> np.isclose([1e-8, 1e-7], [0.0, 0.0])
+        array([ True, False])
+        >>> np.isclose([1e-100, 1e-7], [0.0, 0.0], atol=0.0)
+        array([False, False])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.0])
+        array([ True,  True])
+        >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
+        array([False,  True])
+        """
+        def within_tol(x, y, atol, rtol):
+            with errstate(invalid='ignore'):
+                return less_equal(abs(x-y), atol + rtol * abs(y))
+    
+        x = asanyarray(a)
+        y = asanyarray(b)
+    
+        # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+        # This will cause casting of x later. Also, make sure to allow subclasses
+        # (e.g., for numpy.ma).
+        dt = multiarray.result_type(y, 1.)
+        y = array(y, dtype=dt, copy=False, subok=True)
+    
+>       xfin = isfinite(x)
+E       TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''
+
+/Users/sid/python3_venv/lib/python3.7/site-packages/numpy/core/numeric.py:2287: TypeError
+----------------------------- Captured stdout call -----------------------------
+None Scalar(0.181818)
+None Scalar(0.181818)
+None Scalar(0.181818)
+---------------------------------- Hypothesis ----------------------------------
+Falsifying example: test_two_derivative(fn=('div', <function tests.test_scalar.<lambda>>), t1=Scalar(0.000000), t2=Scalar(0.000000))
+=========================== short test summary info ============================
+FAILED tests/test_autodiff.py::test_backprop - assert None == 5
+FAILED tests/test_scalar.py::test_one_derivative[fn0] - TypeError: zip argume...
+FAILED tests/test_scalar.py::test_one_derivative[fn1] - TypeError: ufunc 'isf...
+FAILED tests/test_scalar.py::test_one_derivative[fn2] - TypeError: ufunc 'isf...
+FAILED tests/test_scalar.py::test_one_derivative[fn3] - TypeError: ufunc 'isf...
+FAILED tests/test_scalar.py::test_one_derivative[fn4] - TypeError: ufunc 'isf...
+FAILED tests/test_scalar.py::test_one_derivative[fn5] - TypeError: zip argume...
+FAILED tests/test_scalar.py::test_one_derivative[fn6] - TypeError: zip argume...
+FAILED tests/test_scalar.py::test_one_derivative[fn7] - TypeError: zip argume...
+FAILED tests/test_scalar.py::test_two_derivative[fn0] - TypeError: ufunc 'isf...
+FAILED tests/test_scalar.py::test_two_derivative[fn1] - TypeError: ufunc 'isf...
+FAILED tests/test_scalar.py::test_two_derivative[fn2] - TypeError: ufunc 'isf...
+====================== 12 failed, 10 deselected in 0.54s =======================
+
+=================
+Running test 4
+=================
